@@ -1,7 +1,12 @@
 const express = require('express')
 const app = express()
 
-const PORT = 3001
+require('dotenv').config()
+
+const PORT = process.env.PORT
+
+const userController = require('./controllers/user')
+app.use('/user', userController)
 
 app.get('/', (req, res) => {
   res.send('found')
