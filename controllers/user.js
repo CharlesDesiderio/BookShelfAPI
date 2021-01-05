@@ -18,6 +18,10 @@ const verifyToken = (req, res, next) => {
   }
 }
 
+users.post('/register', (req, res) => {
+  
+})
+
 users.get('/profile', (req, res) => { // Add the verify middleware after testing!
   res.send('gotcha')
 })
