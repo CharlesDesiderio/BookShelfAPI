@@ -4,6 +4,8 @@ const bcrypt = require('bcrypt')
 
 const users = express.Router()
 
+const User = require('../models/user')
+
 const verifyToken = (req, res, next) => {
   const bearerHeader = req.headers['authorization']
   if (typeof bearerHeader !== 'undefined') {
@@ -19,7 +21,7 @@ const verifyToken = (req, res, next) => {
 }
 
 users.post('/register', (req, res) => {
-  
+
 })
 
 users.get('/profile', (req, res) => { // Add the verify middleware after testing!
