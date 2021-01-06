@@ -32,29 +32,39 @@ users.post('/register', (req, res) => {
         error: 'User already exists'
       })
     } else {
-      req.body.bookCollection = []
-      req.body.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10))
-      User.create(req.body, (err, createdUser) => {
-        if (err) {
+
+      User.find({ userName: req.body.userName }, (err, foundUser) => {
+        if (foundUser.length > 0) {
           res.status(400).json({
-            error: err
+            error: 'User name in use'
           })
         } else {
-          const user = {
-            userId: createdUser._id,
-            email: createdUser.email,
-            userName: createdUser.userName,
-            bookCollection: createdUser.bookCollection
-          }
-          jwt.sign({ user }, process.env.TOKEN_SECRET, (err, token) => {
+          req.body.bookCollection = []
+          req.body.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10))
+          User.create(req.body, (err, createdUser) => {
             if (err) {
               res.status(400).json({
                 error: err
               })
             } else {
-              res.status(200).json({
-                user: createdUser,
-                token: token
+              const user = {
+                userId: createdUser._id,
+                email: createdUser.email,
+                userName: createdUser.userName,
+                displayName: createdUser.displayName,
+                bookCollection: createdUser.bookCollection
+              }
+              jwt.sign({ user }, process.env.TOKEN_SECRET, (err, token) => {
+                if (err) {
+                  res.status(400).json({
+                    error: err
+                  })
+                } else {
+                  res.status(200).json({
+                    user: createdUser,
+                    token: token
+                  })
+                }
               })
             }
           })
@@ -80,6 +90,7 @@ users.post('/login', (req, res) => { // Add the verify middleware after testing!
           userId: foundUser[0]._id,
           email: foundUser[0].email,
           userName: foundUser[0].userName,
+          displayName: foundUser[0].displayName,
           bookCollection: foundUser[0].bookCollection
         }
         jwt.sign({ user }, process.env.TOKEN_SECRET, (err, token) => {
@@ -99,6 +110,27 @@ users.post('/login', (req, res) => { // Add the verify middleware after testing!
           error: 'Invalid login'
         })
       }
+    }
+  })
+})
+
+users.get('/profile/:userName', (req, res) => {
+  User.find({ userName: req.params.userName }, (err, foundUser) => {
+    if (err) {
+      res.status(400).json({
+        error: err
+      })
+    } else {
+      const displayUser = {
+        userName: foundUser[0].userName,
+        displayName: foundUser[0].displayName,
+        bookCollection: foundUser[0].bookCollection
+      }
+      
+
+      res.status(200).json({
+        user: displayUser
+      })
     }
   })
 })
