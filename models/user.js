@@ -12,7 +12,8 @@ const userSchema = mongoose.Schema({
   password: {
     type: String,
     required: true
-  }
+  },
+  bookCollection: [String]
 })
 
 const User = mongoose.model('User', userSchema)
