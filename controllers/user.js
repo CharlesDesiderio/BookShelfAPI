@@ -20,13 +20,17 @@ const verifyToken = (req, res, next) => {
   }
 }
 
+const sendError = () => {
+  res.status(400).json({
+    error: err
+  })
+}
+
 users.post('/register', (req, res) => {
   console.log(req.body)
   User.find({ email: req.body.email }, (err, foundUser) => {
     if (err) {
-      res.status(400).json({
-        error: err
-      })
+      sendError()
     } else if (foundUser.length > 0) {
       res.status(400).json({
         error: 'User already exists'
@@ -43,9 +47,7 @@ users.post('/register', (req, res) => {
           req.body.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10))
           User.create(req.body, (err, createdUser) => {
             if (err) {
-              res.status(400).json({
-                error: err
-              })
+              sendError()
             } else {
               const user = {
                 userId: createdUser._id,
@@ -56,9 +58,7 @@ users.post('/register', (req, res) => {
               }
               jwt.sign({ user }, process.env.TOKEN_SECRET, (err, token) => {
                 if (err) {
-                  res.status(400).json({
-                    error: err
-                  })
+                  sendError()
                 } else {
                   res.status(200).json({
                     user: createdUser,
@@ -77,9 +77,7 @@ users.post('/register', (req, res) => {
 users.post('/login', (req, res) => { // Add the verify middleware after testing!
   User.find({ email: req.body.email }, (err, foundUser) => {
     if (err) {
-      res.status(400).json({
-        error: err
-      })
+      sendError()
     } else if (foundUser.length === 0) {
       res.status(400).json({
         error: 'Invalid login'
@@ -95,9 +93,7 @@ users.post('/login', (req, res) => { // Add the verify middleware after testing!
         }
         jwt.sign({ user }, process.env.TOKEN_SECRET, (err, token) => {
           if (err) {
-            res.status(400).json({
-              error: err
-            })
+            sendError()
           } else {
             res.status(200).json({
               user: user,
@@ -117,9 +113,7 @@ users.post('/login', (req, res) => { // Add the verify middleware after testing!
 users.get('/profile/:userName', (req, res) => {
   User.find({ userName: req.params.userName }, (err, foundUser) => {
     if (err) {
-      res.status(400).json({
-        error: err
-      })
+      sendError()
     } else {
       const displayUser = {
         userName: foundUser[0].userName,
@@ -127,9 +121,33 @@ users.get('/profile/:userName', (req, res) => {
         bookCollection: foundUser[0].bookCollection
       }
       
-
       res.status(200).json({
         user: displayUser
+      })
+    }
+  })
+})
+
+users.put('/addBook', verifyToken, (req, res) => {
+  User.find({ userName: req.body.userName }, (err, foundUser) => {
+    if (err) {
+      sendError()
+    } else if (foundUser[0].bookCollection.includes(req.body.bookIsbn)) {
+      res.status(400).json({
+        error: 'Book already in collection'
+      })
+    } else {
+      const userWithNewBook = foundUser[0]
+      userWithNewBook.bookCollection.push(req.body.bookIsbn)
+      User.findByIdAndUpdate(foundUser[0]._id, userWithNewBook, (err, updatedUser) => {
+        console.log(foundUser[0]._id)
+        if (err) {
+          sendError()
+        } else {
+          res.status(200).json({
+            message: 'Successfully added!'
+          })
+        }
       })
     }
   })
