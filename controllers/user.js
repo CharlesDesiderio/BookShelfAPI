@@ -140,12 +140,35 @@ users.put('/addBook', verifyToken, (req, res) => {
       const userWithNewBook = foundUser[0]
       userWithNewBook.bookCollection.push(req.body.bookIsbn)
       User.findByIdAndUpdate(foundUser[0]._id, userWithNewBook, (err, updatedUser) => {
-        console.log(foundUser[0]._id)
         if (err) {
           sendError()
         } else {
           res.status(200).json({
             message: 'Successfully added!'
+          })
+        }
+      })
+    }
+  })
+})
+
+users.put('/removeBook', verifyToken, (req, res) => {
+  User.find({ userName: req.body.userName }, (err, foundUser) => {
+    if (err) {
+      sendError()
+    } else if (!foundUser[0].bookCollection.includes(req.body.bookIsbn)) {
+      res.status(400).json({
+        error: 'Book not in collection'
+      })
+    } else {
+      const userWithoutBook = foundUser[0]
+      userWithoutBook.bookCollection.splice(userWithoutBook.bookCollection.indexOf(req.body.bookIsbn), 1)
+      User.findByIdAndUpdate(foundUser[0]._id, userWithoutBook, (err, updatedUser) => {
+        if (err) {
+          sendError()
+        } else {
+          res.status(200).json({
+            message: 'Successfully removed!'
           })
         }
       })
