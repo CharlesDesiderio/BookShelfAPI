@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt')
 const users = express.Router()
 
 const User = require('../models/user')
+const e = require('express')
 
 const verifyToken = (req, res, next) => {
   const bearerHeader = req.headers['authorization']
@@ -27,7 +28,7 @@ const sendError = () => {
 }
 
 users.post('/register', (req, res) => {
-  console.log(req.body)
+  req.body.email = req.body.email.toLowerCase()
   User.find({ email: req.body.email }, (err, foundUser) => {
     if (err) {
       sendError()
@@ -37,13 +38,14 @@ users.post('/register', (req, res) => {
       })
     } else {
 
-      User.find({ userName: req.body.userName }, (err, foundUser) => {
+      User.find({ userName: req.body.userName.toLowerCase() }, (err, foundUser) => {
         if (foundUser.length > 0) {
           res.status(400).json({
             error: 'User name in use'
           })
         } else {
           req.body.bookCollection = []
+          req.body.userName = req.body.UserName.toLowerCase()
           req.body.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(10))
           User.create(req.body, (err, createdUser) => {
             if (err) {
@@ -75,14 +77,17 @@ users.post('/register', (req, res) => {
 })
 
 users.post('/login', (req, res) => { // Add the verify middleware after testing!
+  req.body.email = req.body.email.toLowerCase()
   User.find({ email: req.body.email }, (err, foundUser) => {
     if (err) {
       sendError()
     } else if (foundUser.length === 0) {
+      
       res.status(400).json({
         error: 'Invalid login'
       })
     } else {
+
       if (bcrypt.compareSync(req.body.password, foundUser[0].password)) {
         const user = {
           userId: foundUser[0]._id,
@@ -91,10 +96,12 @@ users.post('/login', (req, res) => { // Add the verify middleware after testing!
           displayName: foundUser[0].displayName,
           bookCollection: foundUser[0].bookCollection
         }
+        
         jwt.sign({ user }, process.env.TOKEN_SECRET, (err, token) => {
           if (err) {
             sendError()
           } else {
+            console.log(user)
             res.status(200).json({
               user: user,
               token: token
